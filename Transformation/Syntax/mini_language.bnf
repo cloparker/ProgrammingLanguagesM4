@@ -1,0 +1,34 @@
+USE_LR_PARSER
+
+program
+
+(* ======================================================================================================= *)
+<program>               ::= <stmtList>                                                                    .
+<stmtList>              ::= <stmt> ";" <stmtList> | <epsilon>                                             .
+<stmt>                  ::= <declaration> | <assign> | <conditional> | <decoratedId> | <iterative>
+                          | <block> | <output>                                                            . 
+<epsilon> ::= .
+<declaration>           ::= "int" id | "bool" id                                                          .
+<assign>                ::= id "=" <expression>                                                           .
+<conditional>           ::= "if" <expression> "then" <block> 
+                          | "if" <expression> "then" <block> "else" <block>                               .
+<decoratedId>           ::= "++"id | "--"id | id"++" | id"--"                                             .
+<iterative>             ::= <whileLoop> | <forLoop>                                                       .
+<whileLoop>             ::= "while""(" <expression> ")" <block>                                           .
+<forLoop>               ::= "for""(" <assign> ";" <expression> ";" <decoratedId> ")" <block>              .
+<block>                 ::= "{"<stmtList>"}"                                                              .
+<output>                ::= "print""("<expression>")"                                                     .
+<expression>            ::= <expression> "||" <logicalOR> | <logicalOR>                                   .
+<logicalOR>             ::= <logicalOR> "&&" <logicalAND> | <logicalAND>                                  .
+<logicalAND>            ::= <logicalAND> "==" <notEquals> | <notEquals>                                   .
+<notEquals>             ::= <notEquals> "!=" <equality> | <equality>                                      .
+<equality>              ::= <equality> "<" <additive> | <equality> ">" <additive> 
+                          | <equality> "<=" <additive> | <equality> ">=" <additive> | <additive>          .
+<additive>              ::= <additive> "+" <multiplicative> | <additive> "-" <multiplicative> 
+                          | <multiplicative>                                                              .
+<multiplicative>        ::= <multiplicative> "*" <unary> | <multiplicative> "div" <unary>
+                          | <multiplicative> "mod" <unary> | <unary>                                      .
+<unary>                 ::= "-"<unary> | "!"<unary> | <exponent>                                          .
+<exponent>              ::= <factor> "**" <exponent> | <factor>                                           .
+<factor>                ::= integer_value | boolean_value | id | "(" <expression> ")" 
+                          | "|" <expression> "|"                                                          .

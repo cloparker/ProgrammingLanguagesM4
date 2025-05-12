@@ -1,0 +1,81 @@
+
+digraph "three_x_plus_1"
+{
+struct1 [label="program"]
+struct2 [label="stmtList"]
+struct3 [label="stmt"]
+struct4 [label="assign"]
+struct5 [label="id"]
+struct6 [label="x"]
+struct5->struct6
+struct4->struct5
+struct7 [label="="]
+struct4->struct7
+struct8 [label="expression"]
+struct9 [label="logicalOR"]
+struct10 [label="logicalAND"]
+struct11 [label="equality"]
+struct12 [label="additive"]
+struct13 [label="multiplicative"]
+struct14 [label="unary"]
+struct15 [label="exponent"]
+struct16 [label="factor"]
+struct17 [label="integer_value"]
+struct18 [label="1"]
+struct17->struct18
+struct16->struct17
+struct15->struct16
+struct14->struct15
+struct13->struct14
+struct12->struct13
+struct11->struct12
+struct10->struct11
+struct9->struct10
+struct8->struct9
+struct4->struct8
+struct3->struct4
+struct2->struct3
+struct19 [label=";"]
+struct2->struct19
+struct20 [label="stmtList"]
+struct21 [label="stmt"]
+struct22 [label="assign"]
+struct23 [label="id"]
+struct24 [label="y"]
+struct23->struct24
+struct22->struct23
+struct25 [label="="]
+struct22->struct25
+struct26 [label="expression"]
+struct27 [label="logicalOR"]
+struct28 [label="logicalAND"]
+struct29 [label="equality"]
+struct30 [label="additive"]
+struct31 [label="multiplicative"]
+struct32 [label="unary"]
+struct33 [label="exponent"]
+struct34 [label="factor"]
+struct35 [label="integer_value"]
+struct36 [label="2"]
+struct35->struct36
+struct34->struct35
+struct33->struct34
+struct32->struct33
+struct31->struct32
+struct30->struct31
+struct29->struct30
+struct28->struct29
+struct27->struct28
+struct26->struct27
+struct22->struct26
+struct21->struct22
+struct20->struct21
+struct37 [label=";"]
+struct20->struct37
+struct38 [label="stmtList"]
+struct39 [label="epsilon"]
+struct38->struct39
+struct20->struct38
+struct2->struct20
+struct1->struct2
+}
