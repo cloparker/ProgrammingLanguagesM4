@@ -37,7 +37,30 @@ type store = (loc * denotable_value) list
    incremented. *)
 val initialModel = ( []:env, 0:loc, []:store )
 
+fun accessEnv ([], _) = NONE
+  | accessEnv ((id, t, loc)::rest, x) = 
+      if id = x then
+        SOME (t, loc)
+      else
+        accessEnv (rest, x)
 
+fun accessStore ([], _) = NONE
+  | accessStore ((loc, value)::rest, targetLocation) = 
+      if loc = targetLocation then
+        SOME value
+      else
+        accessStore (rest, targetLocation)
+
+fun updateEnv (id, t, loc, (env, s)) = ((id, t, loc)::env, s)
+
+fun updateStore (store, targetLocation, newValue) = 
+
+fun getLoc (environment, variableName) = 
+
+fun getType (t, loc) = t
+
+fun showEnv (environment) = 
+    
 
 (* =========================================================================================================== *)
 end; (* struct *) 
