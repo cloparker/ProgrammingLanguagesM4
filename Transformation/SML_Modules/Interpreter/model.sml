@@ -24,6 +24,9 @@ datatype types = INT | BOOL | ERROR;
 datatype denotable_value =  Boolean of bool 
                           | Integer of int;
 
+fun toInt(Integer x) = x
+
+fun toBool(Boolean x) = x
 
 type loc   = int
 type env   = (string * types * loc) list
