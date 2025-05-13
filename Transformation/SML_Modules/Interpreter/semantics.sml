@@ -289,6 +289,32 @@ fun M(itree(inode("program",_),
 
     | M _ = raise Fail("error in Semantics.M - this should never occur")
 
+
+fun E(itree(inode("expression",_),
+                [ 
+                    expression,
+                    itree(inode("||",_),[]),
+                    logicalOr
+                ] 
+             ), 
+        m
+    ) =
+    let
+        val (value, m1) = E(expression, m)
+        val value = toBool value
+    in
+        if value then (Boolean true, m1) else E(logicalOr, m1)
+    end
+    | E(itree(inode("expression",_),
+                [ 
+                    logicalOr
+                ] 
+             ), 
+        m
+    ) = E(logicalOr, m)
+
+
+
 (* =========================================================================================================== *)
 end (* struct *)
 (* =========================================================================================================== *)
