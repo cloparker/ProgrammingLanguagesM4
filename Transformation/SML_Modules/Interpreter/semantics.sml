@@ -63,17 +63,231 @@ open CONCRETE_REPRESENTATION;
             (3) the second child is a semi-colon   
 *)
 
-fun M(  itree(inode("prog",_), 
+fun M(itree(inode("program",_), 
                 [ 
-                    stmt_list
+                    stmtList
+                ] 
+             ), 
+        m
+    ) = M(stmtList, m)
+    | M(itree(inode("stmtList",_), 
+                [ 
+                    stmt,
+                    semiColon,
+                    stmtList
+                ] 
+             ), 
+        m
+    ) = M(stmtList, M(stmt, m))
+    | M(itree(inode("stmtList",_), 
+                [ 
+                    epsilon
                 ] 
              ), 
         m
     ) = m
-        
-  | M(  itree(inode(x_root,_), children),_) = raise General.Fail("\n\nIn M root = " ^ x_root ^ "\n\n")
-  
-  | M _ = raise Fail("error in Semantics.M - this should never occur")
+    | M(itree(inode("stmt",_),
+                [ 
+                    declaration
+                ] 
+             ), 
+        m
+    ) = M(declaration, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    assignment
+                ] 
+             ), 
+        m
+    ) = M(assignment, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    conditional
+                ] 
+             ), 
+        m
+    ) = M(conditional, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    decoratedID
+                ] 
+             ), 
+        m
+    ) = M(decoratedID, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    iterative
+                ] 
+             ), 
+        m
+    ) = M(iterative, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    output
+                ] 
+             ), 
+        m
+    ) = M(output, m)
+    | M(itree(inode("stmt",_),
+                [ 
+                    block
+                ] 
+             ), 
+        m
+    ) = M(block, m)
+    | M(itree(inode("declaration",_),
+                [ 
+                    typeName,
+                    id
+                ] 
+             ), 
+        m
+    ) = updateEnv(id, typeName, new(), m)
+    | M(itree(inode("assign",_),
+                [ 
+                    id,
+                    equals,
+                    expression
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(accessEnv(id, m))
+        val (value, m1) = E(expression, m)
+    in
+        updateStore(loc, value, m1)
+    end
+    | M(itree(inode("conditional",_),
+                [ 
+                    itree(inode("if",_),[]),
+                    expression,
+                    itree(inode("then",_),[]),
+                    block,
+                    itree(inode("else",_),[]),
+                    block
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(expression, m)
+        val value = toBool value
+    in
+        if value then M(block, m1) else M(block, m1)
+    end
+    | M(itree(inode("conditional",_),
+                [ 
+                    itree(inode("if",_),[]),
+                    expression,
+                    itree(inode("then",_),[]),
+                    block
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(expression, m)
+        val value = toBool value
+    in
+        if value then M(block, m1) else m1
+    end
+    | M(itree(inode("decoratedID",_),
+                [ 
+                    itree(inode("++",_),[]),
+                    id
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(accessEnv(id, m))
+        val value = accessStore(loc, m)
+    in
+        updateStore(loc, value + 1, m)
+    end
+    | M(itree(inode("decoratedID",_),
+                [ 
+                    itree(inode("--",_),[]),
+                    id
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(accessEnv(id, m))
+        val value = accessStore(loc, m)
+    in
+        updateStore(loc, value - 1, m)
+    end
+    | M(itree(inode("decoratedID",_),
+                [ 
+                    id,
+                    itree(inode("++",_),[])
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(accessEnv(id, m))
+        val value = accessStore(loc, m)
+    in
+        updateStore(loc, value + 1, m)
+    end
+    | M(itree(inode("decoratedID",_),
+                [ 
+                    id,
+                    itree(inode("--",_),[])
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(accessEnv(id, m))
+        val value = accessStore(loc, m)
+    in
+        updateStore(loc, value - 1, m)
+    end
+    | M(itree(inode("iterative",_),
+                [ 
+                    whileLoop
+                ] 
+             ), 
+        m
+    ) = M(whileLoop, m)
+    | M(itree(inode("iterative",_),
+                [ 
+                    forLoop
+                ] 
+             ), 
+        m
+    ) = M(forLoop, m)
+    | M(itree(inode("whileLoop",_),
+                [ 
+                    itree(inode("while",_),[]),
+                    itree(inode("(",_),[]),
+                    expression,
+                    itree(inode(")",_),[]),
+                    block
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        fun loop(m) = 
+            let
+                val (value, m1) = E(expression, m)
+                val value = toBool value
+            in
+                if value then M(block, m1) else m1
+            end
+    in
+        loop(m)
+    end
+
+
+
+    | M _ = raise Fail("error in Semantics.M - this should never occur")
 
 (* =========================================================================================================== *)
 end (* struct *)
