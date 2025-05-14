@@ -583,7 +583,124 @@ fun E(itree(inode("expression",_),
     in
         (value mod value2, m2)
     end
-    
+    | E(itree(inode("multiplicative",_),
+                [ 
+                    unary
+                ]
+             ), 
+        m
+    ) = E(unary, m)
+
+    | E(itree(inode("unary",_),
+                [ 
+                    itree(inode("-",_),[]),
+                    unary
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(unary, m)
+        val value = toInt value
+    in
+        (-value, m1)
+    end
+    | E(itree(inode("unary",_),
+                [ 
+                    itree(inode("!",_),[]),
+                    logicalOr
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(logicalOr, m)
+        val value = toBool value
+    in
+        (not value, m1)
+    end
+    | E(itree(inode("unary",_),
+                [ 
+                    exponent
+                ]
+             ), 
+        m
+    ) = E(exponent, m)
+    | E(itree(inode("exponent",_),
+                [ 
+                    factor,
+                    itree(inode("^",_),[]),
+                    exponent
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(factor, m)
+        val value = toInt value
+        val (value2, m2) = E(exponent, m1)
+        val value2 = toInt value2
+    in
+        (Int.pow value value2, m2)
+    end
+    | E(itree(inode("exponent",_),
+                [ 
+                    factor
+                ]
+             ), 
+        m
+    ) = E(factor, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    integer_value
+                ]
+             ), 
+        m
+    ) = (Integer integer_value, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    boolean_value
+                ]
+             ), 
+        m
+    ) = (Boolean boolean_value, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    id
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val value = accessEnv(id, m)
+    in
+        (value, m)
+    end
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode("(",_),[]),
+                    expression,
+                    itree(inode(")",_),[])
+                ]
+             ), 
+        m
+    ) = E(expression, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode("|",_),[]),
+                    expression,
+                    itree(inode("|",_),[])
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(expression, m)
+        val value = toInt value
+    in
+        (Int.abs value, m1)
+    end
+
     | M(  itree(inode(x_root,_), children),_) = raise General.Fail("\n\nIn M root = " ^ x_root ^ "\n\n")
   
     | M _ = raise Fail("error in Semantics.M - this should never occur")
