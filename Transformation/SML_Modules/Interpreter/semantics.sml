@@ -142,7 +142,7 @@ fun M(itree(inode("program",_),
                 ] 
              ), 
         m
-    ) = updateEnv(id, typeName, new(), m)
+    ) = updateEnv(id, typeName, new(m))
     | M(itree(inode("assign",_),
                 [ 
                     id,
