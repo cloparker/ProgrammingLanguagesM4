@@ -63,6 +63,387 @@ open CONCRETE_REPRESENTATION;
             (3) the second child is a semi-colon   
 *)
 
+fun E(itree(inode("expression",_),
+                [ 
+                    expression,
+                    itree(inode("||",_),[]),
+                    logicalOr
+                ] 
+             ), 
+        m
+    ) =
+    let
+        val (value, m1) = E(expression, m)
+        val value = toBool value
+    in
+        if value then (Boolean true, m1) else E(logicalOr, m1)
+    end
+    | E(itree(inode("expression",_),
+                [ 
+                    logicalOr
+                ] 
+             ), 
+        m
+    ) = E(logicalOr, m)
+    | E(itree(inode("logicalOr",_),
+                [ 
+                    logicalAnd,
+                    itree(inode("&&",_),[]),
+                    logicalOr
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(logicalAnd, m)
+        val value = toBool value
+    in
+        if value then E(logicalOr, m1) else (Boolean false, m1)
+    end
+    | E(itree(inode("logicalOr",_),
+                [ 
+                    logicalAnd
+                ] 
+             ), 
+        m
+    ) = E(logicalAnd, m)
+    | E(itree(inode("logicalAnd",_),
+                [ 
+                    logicalAnd,
+                    itree(inode("==",_),[]),
+                    notEquals
+                ] 
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(logicalAnd, m)
+        val value = toBool value
+        val (value2, m2) = E(notEquals, m1)
+        val value2 = toBool value2
+    in
+        if value = value2 then (Boolean true, m2) else (Boolean false, m2)
+    end
+    | E(itree(inode("logicalAnd",_),
+                [ 
+                    notEquals
+                ]
+             ), 
+        m
+    ) = E(notEquals, m)
+    | E(itree(inode("notEquals",_),
+                [ 
+                    notEquals,
+                    itree(inode("!=",_),[]),
+                    equality
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(equality, m)
+        val value = toBool value
+        val (value2, m2) = E(notEquals, m1)
+        val value2 = toBool value2
+    in
+        if value = value2 then (Boolean false, m2) else (Boolean true, m2)
+    end
+    | E(itree(inode("notEquals",_),
+                [ 
+                    equality
+                ]
+             ), 
+        m
+    ) = E(equality, m)
+    | E(itree(inode("equality",_),
+                [ 
+                    equality,
+                    itree(inode("<",_),[]),
+                    additive
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(additive, m)
+        val value = toInt value
+        val (value2, m2) = E(equality, m1)
+        val value2 = toInt value2
+    in
+        if value < value2 then (Boolean true, m2) else (Boolean false, m2)
+    end
+    | E(itree(inode("equality",_),
+                [ 
+                    equality,
+                    itree(inode(">",_),[]),
+                    additive
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(additive, m)
+        val value = toInt value
+        val (value2, m2) = E(equality, m1)
+        val value2 = toInt value2
+    in
+        if value > value2 then (Boolean true, m2) else (Boolean false, m2)
+    end
+    | E(itree(inode("equality",_),
+                [ 
+                    equality,
+                    itree(inode("<=",_),[]),
+                    additive
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(additive, m)
+        val value = toInt value
+        val (value2, m2) = E(equality, m1)
+        val value2 = toInt value2
+    in
+        if value <= value2 then (Boolean true, m2) else (Boolean false, m2)
+    end
+    | E(itree(inode("equality",_),
+                [ 
+                    equality,
+                    itree(inode(">=",_),[]),
+                    additive
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(additive, m)
+        val value = toInt value
+        val (value2, m2) = E(equality, m1)
+        val value2 = toInt value2
+    in
+        if value >= value2 then (Boolean true, m2) else (Boolean false, m2)
+    end
+    | E(itree(inode("equality",_),
+                [ 
+                    additive
+                ]
+             ), 
+        m
+    ) = E(additive, m)
+    | E(itree(inode("additive",_),
+                [ 
+                    additive,
+                    itree(inode("+",_),[]),
+                    multiplicative
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(multiplicative, m)
+        val value = value
+        val (value2, m2) = E(additive, m1)
+        val value2 = value2
+    in
+        (value + value2, m2)
+    end
+    | E(itree(inode("additive",_),
+                [ 
+                    additive,
+                    itree(inode("-",_),[]),
+                    multiplicative
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(multiplicative, m)
+        val value = toInt value
+        val (value2, m2) = E(additive, m1)
+        val value2 = toInt value2
+    in
+        (value - value2, m2)
+    end
+    | E(itree(inode("additive",_),
+                [ 
+                    multiplicative
+                ]
+             ), 
+        m
+    ) = E(multiplicative, m)
+    | E(itree(inode("multiplicative",_),
+                [ 
+                    multiplicative,
+                    itree(inode("*",_),[]),
+                    unary
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(unary, m)
+        val value = toInt value
+        val (value2, m2) = E(multiplicative, m1)
+        val value2 = toInt value2
+    in
+        (value * value2, m2)
+    end
+    | E(itree(inode("multiplicative",_),
+                [ 
+                    multiplicative,
+                    itree(inode("div",_),[]),
+                    unary
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(unary, m)
+        val value = toInt value
+        val (value2, m2) = E(multiplicative, m1)
+        val value2 = toInt value2
+    in
+        (value div value2, m2)
+    end
+    | E(itree(inode("multiplicative",_),
+                [ 
+                    multiplicative,
+                    itree(inode("mod",_),[]),
+                    unary
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(unary, m)
+        val value = toInt value
+        val (value2, m2) = E(multiplicative, m1)
+        val value2 = toInt value2
+    in
+        (value mod value2, m2)
+    end
+    | E(itree(inode("multiplicative",_),
+                [ 
+                    unary
+                ]
+             ), 
+        m
+    ) = E(unary, m)
+
+    | E(itree(inode("unary",_),
+                [ 
+                    itree(inode("-",_),[]),
+                    unary
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(unary, m)
+        val value = toInt value
+    in
+        (~value, m1)
+    end
+    | E(itree(inode("unary",_),
+                [ 
+                    itree(inode("!",_),[]),
+                    logicalOr
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(logicalOr, m)
+        val value = toBool value
+    in
+        (not value, m1)
+    end
+    | E(itree(inode("unary",_),
+                [ 
+                    exponent
+                ]
+             ), 
+        m
+    ) = E(exponent, m)
+    | E(itree(inode("exponent",_),
+                [ 
+                    factor,
+                    itree(inode("^",_),[]),
+                    exponent
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(factor, m)
+        val value = toInt value
+        val (value2, m2) = E(exponent, m1)
+        val value2 = toInt value2
+        fun exponent(base, power) = 
+            if power = 0 then 1
+            else base * exponent(base, power - 1)
+    in
+        (exponent(value, value2), m2)
+    end
+    | E(itree(inode("exponent",_),
+                [ 
+                    factor
+                ]
+             ), 
+        m
+    ) = E(factor, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode(integer_value,_),[])
+                ]
+             ), 
+        m
+    ) = (Int.fromString integer_value, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode(boolean_value,_),[])
+                ]
+             ), 
+        m
+    ) = (Bool.fromString boolean_value, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode(id,_),[])
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val loc = getLoc(id, m)
+        val value = accessStore(loc, m)
+    in
+        (value, m)
+    end
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode("(",_),[]),
+                    expression,
+                    itree(inode(")",_),[])
+                ]
+             ), 
+        m
+    ) = E(expression, m)
+    | E(itree(inode("factor",_),
+                [ 
+                    itree(inode("|",_),[]),
+                    expression,
+                    itree(inode("|",_),[])
+                ]
+             ), 
+        m
+    ) = 
+    let
+        val (value, m1) = E(expression, m)
+        val value = toInt value
+    in
+        (Int.abs value, m1)
+    end
+
 fun M(itree(inode("program",_), 
                 [ 
                     stmtList
@@ -321,389 +702,12 @@ fun M(itree(inode("program",_),
              ), 
         m
     ) = M(stmtList, m)
-    | M _ = raise Fail("error in Semantics.M - this should never occur")
-
-
-fun E(itree(inode("expression",_),
-                [ 
-                    expression,
-                    itree(inode("||",_),[]),
-                    logicalOr
-                ] 
-             ), 
-        m
-    ) =
-    let
-        val (value, m1) = E(expression, m)
-        val value = toBool value
-    in
-        if value then (Boolean true, m1) else E(logicalOr, m1)
-    end
-    | E(itree(inode("expression",_),
-                [ 
-                    logicalOr
-                ] 
-             ), 
-        m
-    ) = E(logicalOr, m)
-    | E(itree(inode("logicalOr",_),
-                [ 
-                    logicalAnd,
-                    itree(inode("&&",_),[]),
-                    logicalOr
-                ] 
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(logicalAnd, m)
-        val value = toBool value
-    in
-        if value then E(logicalOr, m1) else (Boolean false, m1)
-    end
-    | E(itree(inode("logicalOr",_),
-                [ 
-                    logicalAnd
-                ] 
-             ), 
-        m
-    ) = E(logicalAnd, m)
-    | E(itree(inode("logicalAnd",_),
-                [ 
-                    logicalAnd,
-                    itree(inode("==",_),[]),
-                    notEquals
-                ] 
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(equality, m)
-        val value = toBool value
-        val (value2, m2) = E(notEquals, m1)
-        val value2 = toBool value2
-    in
-        if value = value2 then (Boolean true, m2) else (Boolean false, m2)
-    end
-    | E(itree(inode("logicalAnd",_),
-                [ 
-                    notEquals
-                ]
-             ), 
-        m
-    ) = E(notEquals, m)
-    | E(itree(inode("notEquals",_),
-                [ 
-                    notEquals,
-                    itree(inode("!=",_),[]),
-                    equality
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(equality, m)
-        val value = toBool value
-        val (value2, m2) = E(notEquals, m1)
-        val value2 = toBool value2
-    in
-        if value = value2 then (Boolean false, m2) else (Boolean true, m2)
-    end
-    | E(itree(inode("notEquals",_),
-                [ 
-                    equality
-                ]
-             ), 
-        m
-    ) = E(equality, m)
-    | E(itree(inode("equality",_),
-                [ 
-                    equality,
-                    itree(inode("<",_),[]),
-                    additive
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(additive, m)
-        val value = toInt value
-        val (value2, m2) = E(equality, m1)
-        val value2 = toInt value2
-    in
-        if value < value2 then (Boolean true, m2) else (Boolean false, m2)
-    end
-    | E(itree(inode("equality",_),
-                [ 
-                    equality,
-                    itree(inode(">",_),[]),
-                    additive
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(additive, m)
-        val value = toInt value
-        val (value2, m2) = E(equality, m1)
-        val value2 = toInt value2
-    in
-        if value > value2 then (Boolean true, m2) else (Boolean false, m2)
-    end
-    | E(itree(inode("equality",_),
-                [ 
-                    equality,
-                    itree(inode("<=",_),[]),
-                    additive
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(additive, m)
-        val value = toInt value
-        val (value2, m2) = E(equality, m1)
-        val value2 = toInt value2
-    in
-        if value <= value2 then (Boolean true, m2) else (Boolean false, m2)
-    end
-    | E(itree(inode("equality",_),
-                [ 
-                    equality,
-                    itree(inode(">=",_),[]),
-                    additive
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(additive, m)
-        val value = toInt value
-        val (value2, m2) = E(equality, m1)
-        val value2 = toInt value2
-    in
-        if value >= value2 then (Boolean true, m2) else (Boolean false, m2)
-    end
-    | E(itree(inode("equality",_),
-                [ 
-                    additive
-                ]
-             ), 
-        m
-    ) = E(additive, m)
-    | E(itree(inode("additive",_),
-                [ 
-                    additive,
-                    itree(inode("+",_),[]),
-                    multiplicative
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(multiplicative, m)
-        val value = toInt value
-        val (value2, m2) = E(additive, m1)
-        val value2 = toInt value2
-    in
-        (value + value2, m2)
-    end
-    | E(itree(inode("additive",_),
-                [ 
-                    additive,
-                    itree(inode("-",_),[]),
-                    multiplicative
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(multiplicative, m)
-        val value = toInt value
-        val (value2, m2) = E(additive, m1)
-        val value2 = toInt value2
-    in
-        (value - value2, m2)
-    end
-    | E(itree(inode("additive",_),
-                [ 
-                    multiplicative
-                ]
-             ), 
-        m
-    ) = E(multiplicative, m)
-    | E(itree(inode("multiplicative",_),
-                [ 
-                    multiplicative,
-                    itree(inode("*",_),[]),
-                    unary
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(unary, m)
-        val value = toInt value
-        val (value2, m2) = E(multiplicative, m1)
-        val value2 = toInt value2
-    in
-        (value * value2, m2)
-    end
-    | E(itree(inode("multiplicative",_),
-                [ 
-                    multiplicative,
-                    itree(inode("div",_),[]),
-                    unary
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(unary, m)
-        val value = toInt value
-        val (value2, m2) = E(multiplicative, m1)
-        val value2 = toInt value2
-    in
-        (value div value2, m2)
-    end
-    | E(itree(inode("multiplicative",_),
-                [ 
-                    multiplicative,
-                    itree(inode("mod",_),[]),
-                    unary
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(unary, m)
-        val value = toInt value
-        val (value2, m2) = E(multiplicative, m1)
-        val value2 = toInt value2
-    in
-        (value mod value2, m2)
-    end
-    | E(itree(inode("multiplicative",_),
-                [ 
-                    unary
-                ]
-             ), 
-        m
-    ) = E(unary, m)
-
-    | E(itree(inode("unary",_),
-                [ 
-                    itree(inode("-",_),[]),
-                    unary
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(unary, m)
-        val value = toInt value
-    in
-        (-value, m1)
-    end
-    | E(itree(inode("unary",_),
-                [ 
-                    itree(inode("!",_),[]),
-                    logicalOr
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(logicalOr, m)
-        val value = toBool value
-    in
-        (not value, m1)
-    end
-    | E(itree(inode("unary",_),
-                [ 
-                    exponent
-                ]
-             ), 
-        m
-    ) = E(exponent, m)
-    | E(itree(inode("exponent",_),
-                [ 
-                    factor,
-                    itree(inode("^",_),[]),
-                    exponent
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(factor, m)
-        val value = toInt value
-        val (value2, m2) = E(exponent, m1)
-        val value2 = toInt value2
-    in
-        (Int.pow value value2, m2)
-    end
-    | E(itree(inode("exponent",_),
-                [ 
-                    factor
-                ]
-             ), 
-        m
-    ) = E(factor, m)
-    | E(itree(inode("factor",_),
-                [ 
-                    integer_value
-                ]
-             ), 
-        m
-    ) = (Integer integer_value, m)
-    | E(itree(inode("factor",_),
-                [ 
-                    boolean_value
-                ]
-             ), 
-        m
-    ) = (Boolean boolean_value, m)
-    | E(itree(inode("factor",_),
-                [ 
-                    id
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val value = accessEnv(id, m)
-    in
-        (value, m)
-    end
-    | E(itree(inode("factor",_),
-                [ 
-                    itree(inode("(",_),[]),
-                    expression,
-                    itree(inode(")",_),[])
-                ]
-             ), 
-        m
-    ) = E(expression, m)
-    | E(itree(inode("factor",_),
-                [ 
-                    itree(inode("|",_),[]),
-                    expression,
-                    itree(inode("|",_),[])
-                ]
-             ), 
-        m
-    ) = 
-    let
-        val (value, m1) = E(expression, m)
-        val value = toInt value
-    in
-        (Int.abs value, m1)
-    end
 
     | M(  itree(inode(x_root,_), children),_) = raise General.Fail("\n\nIn M root = " ^ x_root ^ "\n\n")
   
     | M _ = raise Fail("error in Semantics.M - this should never occur")
+
+    
 
 (* =========================================================================================================== *)
 end (* struct *)
